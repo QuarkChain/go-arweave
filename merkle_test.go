@@ -78,4 +78,25 @@ func TestSimpleEvenItem(t *testing.T) {
 	}
 }
 
+func TestSimpleUnevenItem(t *testing.T) {
+	es := make([]*element, 35643)
+	for i := 0; i < len(es); i++ {
+		var bs [32]byte
+		copy(bs[:], big.NewInt(int64(i)).Bytes())
+		es[i] = &element{data: bs, note: *big.NewInt(int64(i + 1))}
+	}
+
+	rh, tree := GenerateTree(es)
+	target := big.NewInt(33271)
+	path := GeneratePath(rh, target, tree)
+	leaf, startOff, endOff, err := ValidatePath(rh, target, big.NewInt(64*1024), path)
+	require.NoError(t, err)
+	require.True(t, target.Cmp(endOff) < 0)
+	require.True(t, target.Cmp(startOff) >= 0)
+
+	var bs [32]byte
+	copy(bs[:], target.Bytes())
+	require.EqualValues(t, leaf, bs, "leaf incorrect")
+}
+
 // TODO: Test sample root
